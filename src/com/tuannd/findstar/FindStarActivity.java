@@ -1,5 +1,7 @@
 package com.tuannd.findstar;
 
+import java.util.Random;
+
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
@@ -7,6 +9,7 @@ import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
+import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.tmx.TMXLayer;
@@ -27,11 +30,13 @@ import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.ITiledTextureRegion;
 import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.util.debug.Debug;
 
 import android.util.DisplayMetrics;
 
+import com.tuannd.findstar.config.Config;
 import com.tuannd.findstar.log.IErrorLog;
 import com.tuannd.findstar.log.Logging;
 
@@ -65,6 +70,14 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 	private ITextureRegion mStar_ITextureRegion;
 	private Sprite mStar_Sprite;
 	
+	
+	//Khai báo arrow
+	private BitmapTextureAtlas mArrow_BitmapTextureAtlas;
+	private ITiledTextureRegion mArrow_ITiledTextureRegion;
+	private AnimatedSprite mArrow_AnimatedSprite;
+	
+	
+	
 	//Khai báo Scence
 	private Scene mScene;
 	
@@ -82,7 +95,11 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 	
 	
 	
-	
+	private static final int LEFT=0;
+	private static final int BUTTOM=1;
+	private static final int RIGHT=2;
+	private static final int UP=3;
+	private static final int FINISHED=4;
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		// TODO Auto-generated method stub
@@ -146,8 +163,20 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 		this.mCamera.setBounds(-100, -100, tmxLayer.getHeight()+100, tmxLayer.getWidth()+100);
         this.mCamera.setBoundsEnabled(true);
 		
+        
+        //Xét giá trị cho dirX và dirY
+        Config.dirX=new Random().nextInt(10);
+        Config.dirY=new Random().nextInt(10);
+        
+        
+        
 		mScene.setOnSceneTouchListener(FindStarActivity.this);
 		mScene.setTouchAreaBindingOnActionMoveEnabled(true);
+		
+		
+		
+		
+		
 		pOnCreateSceneCallback.onCreateSceneFinished(this.mScene);
 		
 	}
@@ -169,6 +198,7 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 	public void loadOnCreateResources(){
 		loadStar_Resources();
 		loadMap_Resources();
+		loadArrow_Resources();
 	}
 	
 	public void loadStar_Resources(){
@@ -178,6 +208,13 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 		this.mStar_BitmapTextureAtlas.load();
 	}
 	
+	
+	public void loadArrow_Resources(){
+		this.mArrow_BitmapTextureAtlas=new BitmapTextureAtlas(this.getTextureManager(), 88, 88,TextureOptions.BILINEAR);
+		this.mArrow_ITiledTextureRegion=BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mArrow_BitmapTextureAtlas, this, "arrow.png", 0, 0,2,2);
+		
+		this.mArrow_BitmapTextureAtlas.load();
+	}
 	
 	public void loadMap_Resources(){
 		try {
@@ -314,7 +351,31 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 //				.convertLocalToSceneCoordinates(pX, pY);
 		TMXTile tmxSelected = this.tmxLayer.getTMXTileAt(pX,pY);
 		System.out.println("Get XY Col:" + tmxSelected.getTileColumn() + "Row:"+ tmxSelected.getTileRow());
+//		addStar(pScene, tmxSelected.getTileX(), tmxSelected.getTileY());
+//		addArrow(pScene, tmxSelected.getTileX(), tmxSelected.getTileY(), LEFT);
+		int result=checkFinished(tmxSelected.getTileColumn(),tmxSelected.getTileRow());
+		
 	}
 	
+	
+	
+	//AddSprite
+	public void addStar(Scene pScene,float x,float y){
+		this.mStar_Sprite=new Sprite(x, y, this.mStar_ITextureRegion,this.getVertexBufferObjectManager());
+		pScene.attachChild(this.mStar_Sprite);
+	}
+	
+	public void addArrow(Scene pScene,float x,float y,int arrow){
+		this.mArrow_AnimatedSprite=new AnimatedSprite(x, y, this.mArrow_ITiledTextureRegion, this.getVertexBufferObjectManager());
+		this.mArrow_AnimatedSprite.setCurrentTileIndex(arrow);
+		pScene.attachChild(this.mArrow_AnimatedSprite);
+	}
    
+	
+	public int checkFinished(int x,int y){
+		int result=-1;
+		if(x==Config.dirX && y==Config.dirY){
+			result=FINISHED;
+		}
+	}
 }
