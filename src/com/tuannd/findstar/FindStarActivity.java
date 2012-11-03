@@ -11,6 +11,7 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.tmx.TMXLayer;
 import org.andengine.extension.tmx.TMXLoader;
@@ -26,6 +27,9 @@ import org.andengine.input.touch.detector.ScrollDetector;
 import org.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.andengine.input.touch.detector.PinchZoomDetector.IPinchZoomDetectorListener;
 import org.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
+import org.andengine.opengl.font.Font;
+import org.andengine.opengl.font.FontFactory;
+import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -107,6 +111,13 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 	
 	private int[][] arr;
 	
+	//Font
+	private Font mFont;
+	private static final int TEXT_SIZE=26;
+	
+	private Text maxTries_Text;
+	
+	private int current_Tries=10;
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() {
@@ -179,6 +190,11 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
         arr=new int[tmxLayer.getTileColumns()][tmxLayer.getTileRows()]; 
         System.out.println("dirX="+Config.dirX+"   dirY="+Config.dirY);
         
+        
+        this.maxTries_Text=new Text(20, 20, this.mFont, current_Tries+" Tries", this.getVertexBufferObjectManager());
+        
+        mScene.attachChild(maxTries_Text);
+        
 		mScene.setOnSceneTouchListener(FindStarActivity.this);
 		mScene.setTouchAreaBindingOnActionMoveEnabled(true);
 		
@@ -198,6 +214,10 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
 	}
 	
+	
+	
+	
+	
 	/*-------------------------------------------------------------------------------
 	 * -----------------bất đầu Load resources---------------------------------------
 	 * ------------------------------------------------------------------------------
@@ -208,6 +228,7 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 		loadStar_Resources();
 		loadMap_Resources();
 		loadArrow_Resources();
+		loadFont_Resources();
 	}
 	
 	public void loadStar_Resources(){
@@ -239,6 +260,18 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 			Debug.e(e);
 		}
 	}
+	
+	
+	public void loadFont_Resources(){
+		FontFactory.setAssetBasePath("fonts/");
+		final ITexture fontITexture = new BitmapTextureAtlas(
+				this.getTextureManager(), CAMERA_WIDTH, CAMERA_HEIGHT);
+		this.mFont = FontFactory.createFromAsset(this.getFontManager(),
+				fontITexture, this.getAssets(), "Fennario.ttf",
+				TEXT_SIZE, true, android.graphics.Color.WHITE);
+		this.mFont.load();
+	}
+	
 	/*-------------------------------------------------------------------------------
 	 * -----------------Kết thúc Load resources--------------------------------------
 	 * ------------------------------------------------------------------------------
@@ -363,13 +396,29 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 //		addStar(pScene, tmxSelected.getTileX(), tmxSelected.getTileY());
 //		addArrow(pScene, tmxSelected.getTileX(), tmxSelected.getTileY(), LEFT);
 		int result=checkFinished(tmxSelected.getTileColumn(),tmxSelected.getTileRow());
-		if(arr[tmxSelected.getTileColumn()][tmxSelected.getTileRow()]==0){
-			arr[tmxSelected.getTileColumn()][tmxSelected.getTileRow()]=result;
-			addSprite(result, pScene, tmxSelected.getTileX(), tmxSelected.getTileY());
+		if(current_Tries>0){
+			if(arr[tmxSelected.getTileColumn()][tmxSelected.getTileRow()]==0){
+				current_Tries--;
+				arr[tmxSelected.getTileColumn()][tmxSelected.getTileRow()]=result;
+				addSprite(result, pScene, tmxSelected.getTileX(), tmxSelected.getTileY());
+			}
+		}else {
+			FindStarActivity.this.runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					Toast.makeText(FindStarActivity.this, "Your lose", Toast.LENGTH_SHORT).show();
+				}
+			});
 		}
 		
 	}
 	
+	
+	//---------------------------------------------------------------------------------------
+	//------------------------------Add Sprite-----------------------------------------------
+	//---------------------------------------------------------------------------------------
 	
 	
 	//AddSprite
@@ -450,4 +499,9 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 			addArrow(pScene, x, y, BOTTOM);
 		}
 	}
+	
+	//---------------------------------------------------------------------------------------
+	//----------------------------Finished Add Sprite----------------------------------------
+	//---------------------------------------------------------------------------------------
+	
 }
