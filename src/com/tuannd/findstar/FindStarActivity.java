@@ -35,6 +35,7 @@ import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.util.debug.Debug;
 
 import android.util.DisplayMetrics;
+import android.widget.Toast;
 
 import com.tuannd.findstar.config.Config;
 import com.tuannd.findstar.log.IErrorLog;
@@ -96,10 +97,17 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 	
 	
 	private static final int LEFT=0;
-	private static final int BUTTOM=1;
+	private static final int BOTTOM=1;
 	private static final int RIGHT=2;
 	private static final int UP=3;
 	private static final int FINISHED=4;
+	
+	
+	//Mang chua gia tri cac phan tu trong mang da duoc chon hay chua?
+	
+	private int[][] arr;
+	
+	
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		// TODO Auto-generated method stub
@@ -165,10 +173,11 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 		
         
         //Xét giá trị cho dirX và dirY
-        Config.dirX=new Random().nextInt(10);
-        Config.dirY=new Random().nextInt(10);
+        Config.dirX=new Random().nextInt(tmxLayer.getTileColumns());
+        Config.dirY=new Random().nextInt(tmxLayer.getTileRows());
         
-        
+        arr=new int[tmxLayer.getTileColumns()][tmxLayer.getTileRows()]; 
+        System.out.println("dirX="+Config.dirX+"   dirY="+Config.dirY);
         
 		mScene.setOnSceneTouchListener(FindStarActivity.this);
 		mScene.setTouchAreaBindingOnActionMoveEnabled(true);
@@ -354,6 +363,10 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 //		addStar(pScene, tmxSelected.getTileX(), tmxSelected.getTileY());
 //		addArrow(pScene, tmxSelected.getTileX(), tmxSelected.getTileY(), LEFT);
 		int result=checkFinished(tmxSelected.getTileColumn(),tmxSelected.getTileRow());
+		if(arr[tmxSelected.getTileColumn()][tmxSelected.getTileRow()]==0){
+			arr[tmxSelected.getTileColumn()][tmxSelected.getTileRow()]=result;
+			addSprite(result, pScene, tmxSelected.getTileX(), tmxSelected.getTileY());
+		}
 		
 	}
 	
@@ -375,7 +388,66 @@ public class FindStarActivity extends BaseGameActivity implements IScrollDetecto
 	public int checkFinished(int x,int y){
 		int result=-1;
 		if(x==Config.dirX && y==Config.dirY){
+			System.out.println("Finished");
 			result=FINISHED;
+		}
+		if(x<Config.dirX){
+			if(y<Config.dirY){
+				if((new Random().nextInt(1))==0){
+					result=RIGHT;
+				}else result=BOTTOM;
+			}else if(y==Config.dirY){
+				result=RIGHT;
+				
+			}else if(y>Config.dirY){
+				if((new Random().nextInt(1))==0){
+					result=LEFT;
+				}else result=BOTTOM;
+			}
+		}else if(x==Config.dirX){
+			if(y<Config.dirY){
+				result=BOTTOM;
+			}else if(y>Config.dirY){
+				result=UP;
+			}
+		}else if(x>Config.dirX){
+			if(y<Config.dirY){
+				if((new Random().nextInt(1))==0){
+					result=LEFT;
+				}else result=BOTTOM;
+			}else if(y==Config.dirY){
+				result=LEFT;
+			}else if(y>Config.dirY){
+				if((new Random().nextInt(1))==0){
+					result=LEFT;
+				}else{
+					result=UP;
+				} 
+					
+			}
+		}
+		return result;
+	}
+	
+	public void addSprite(int result,Scene pScene,float x,float y){
+		if(result==FINISHED){
+			addStar(pScene, x, y);
+			FindStarActivity.this.runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					Toast.makeText(FindStarActivity.this, "Finished", Toast.LENGTH_SHORT).show();
+				}
+			});
+		}else if(result==LEFT){
+			addArrow(pScene, x, y, LEFT);
+		}else if(result==RIGHT){
+			addArrow(pScene, x, y, RIGHT);
+		}else if(result==UP){
+			addArrow(pScene, x, y, UP);
+		}else if(result==BOTTOM){
+			addArrow(pScene, x, y, BOTTOM);
 		}
 	}
 }
